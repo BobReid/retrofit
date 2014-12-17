@@ -95,6 +95,8 @@ import retrofit.mime.TypedOutput;
  */
 public class RestAdapter {
 
+    static final String THREAD_PREFIX = "Retrofit-";
+    static final String IDLE_THREAD_NAME = THREAD_PREFIX + "Idle";
 
   /** Simple logging abstraction for debug messages. */
   public interface Log {

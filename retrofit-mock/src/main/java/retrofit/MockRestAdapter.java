@@ -288,7 +288,7 @@ public final class MockRestAdapter {
       Request request = requestBuilder.build();
 
       if (restAdapter.logLevel.log()) {
-        request = restAdapter.logAndReplaceRequest("MOCK", request, args);
+//        request = restAdapter.logAndReplaceRequest("MOCK", request, args);
       }
 
       return request;
@@ -303,7 +303,7 @@ public final class MockRestAdapter {
         sleep(calculateDelayForError());
         IOException exception = new IOException("Mock network error!");
         if (restAdapter.logLevel.log()) {
-          restAdapter.logException(exception, url);
+//          restAdapter.logException(exception, url);
         }
         throw RetrofitError.networkError(url, exception);
       }
@@ -375,7 +375,7 @@ public final class MockRestAdapter {
         sleep(calculateDelayForError());
         IOException exception = new IOException("Mock network error!");
         if (restAdapter.logLevel.log()) {
-          restAdapter.logException(exception, url);
+//          restAdapter.logException(exception, url);
         }
         RetrofitError error = RetrofitError.networkError(url, exception);
         Throwable cause = restAdapter.errorHandler.handleError(error);

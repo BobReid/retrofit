@@ -22,8 +22,7 @@ import retrofit.mime.TypedOutput;
  */
 public class RestRequest {
 
-    static final String THREAD_PREFIX = "Retrofit-";
-    static final String IDLE_THREAD_NAME = THREAD_PREFIX + "Idle";
+
 
     private final Endpoint server;
     private final Converter converter;
@@ -70,7 +69,7 @@ public class RestRequest {
 
             if (!methodInfo.isSynchronous) {
                 // If we are executing asynchronously then update the current thread with a useful name.
-                Thread.currentThread().setName(THREAD_PREFIX + url.substring(serverUrl.length()));
+                Thread.currentThread().setName(RestAdapter.THREAD_PREFIX + url.substring(serverUrl.length()));
             }
 
             if (logLevel.log()) {
@@ -150,7 +149,7 @@ public class RestRequest {
             throw RetrofitError.unexpectedError(url, t);
         } finally {
             if (!methodInfo.isSynchronous) {
-                Thread.currentThread().setName(IDLE_THREAD_NAME);
+                Thread.currentThread().setName(RestAdapter.IDLE_THREAD_NAME);
             }
         }
     }
