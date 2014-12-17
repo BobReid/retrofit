@@ -22,16 +22,14 @@ import retrofit.mime.TypedOutput;
  */
 public class RestRequest {
 
-
-
     private final Endpoint server;
     private final Converter converter;
     private final Client client;
     private final RequestInterceptor requestInterceptor;
     private final RestMethodInfo methodInfo;
     private final Object[] args;
-    private final RestAdapter.LogLevel logLevel;
     private final RestAdapter.Log log;
+    private final RestAdapter.LogLevel logLevel;
 
     public RestRequest(Endpoint server, Converter converter, Client client, RequestInterceptor requestInterceptor,
                        RestMethodInfo methodInfo, Object[] args, RestAdapter.LogLevel logLevel, RestAdapter.Log log) {
@@ -45,6 +43,37 @@ public class RestRequest {
         this.log = log;
     }
 
+    public Endpoint getServer() {
+        return server;
+    }
+
+    public Converter getConverter() {
+        return converter;
+    }
+
+    public Client getClient() {
+        return client;
+    }
+
+    public RequestInterceptor getRequestInterceptor() {
+        return requestInterceptor;
+    }
+
+    public RestMethodInfo getMethodInfo() {
+        return methodInfo;
+    }
+
+    public Object[] getArgs() {
+        return args;
+    }
+
+    public RestAdapter.LogLevel getLogLevel() {
+        return logLevel;
+    }
+
+    public RestAdapter.Log getLog() {
+        return log;
+    }
 
     /**
      * Execute an HTTP request.

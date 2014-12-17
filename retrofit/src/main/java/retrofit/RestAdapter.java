@@ -142,6 +142,7 @@ public class RestAdapter {
   final Converter converter;
   final Log log;
   final ErrorHandler errorHandler;
+  final RestHandlerStrategy[] handlerStrategies;
 
   private final Client client;
   private RxSupport rxSupport;
@@ -160,6 +161,11 @@ public class RestAdapter {
     this.errorHandler = errorHandler;
     this.log = log;
     this.logLevel = logLevel;
+    this.handlerStrategies = new RestHandlerStrategy[] {
+              new SynchronousHandlerStrategy(errorHandler),
+              new ObservableHandlerStrategy(requestInterceptor, httpExecutor, errorHandler),
+              new AsyncHandlerStrategy(httpExecutor, callbackExecutor, errorHandler)
+    };
   }
 
   /** Change the level of logging. */
@@ -212,7 +218,6 @@ public class RestAdapter {
           this.methodDetailsCache = methodDetailsCache;
       }
 
-      @SuppressWarnings("unchecked") //
       @Override
       public Object invoke(Object proxy, Method method, final Object[] args)
               throws Throwable {
@@ -222,64 +227,18 @@ public class RestAdapter {
           }
 
           // Load or create the details cache for the current method.
-          final RestMethodInfo methodInfo = getMethodInfo(methodDetailsCache, method);
+          RestMethodInfo methodInfo = getMethodInfo(methodDetailsCache, method);
+          RestRequest request = new RestRequest(server, converter, client, requestInterceptor, methodInfo, args, logLevel, log);
 
-          if (methodInfo.isSynchronous) {
-              try {
-                  RestRequest request = new RestRequest(server, converter, client, requestInterceptor, methodInfo, args, logLevel, log);
-                  return request.invoke();
-              } catch (RetrofitError error) {
-                  Throwable newError = errorHandler.handleError(error);
-                  if (newError == null) {
-                      throw new IllegalStateException("Error handler returned null for wrapped exception.",
-                              error);
-                  }
-                  throw newError;
+          for(RestHandlerStrategy handlerStrategy : handlerStrategies) {
+              if (handlerStrategy.canHandleMethod(methodInfo)) {
+                  return handlerStrategy.handleRequest(request);
               }
           }
 
-          if (httpExecutor == null || callbackExecutor == null) {
-              throw new IllegalStateException("Asynchronous invocation requires calling setExecutors.");
-          }
-
-          if (methodInfo.isObservable) {
-              if (rxSupport == null) {
-                  if (Platform.HAS_RX_JAVA) {
-                      rxSupport = new RxSupport(httpExecutor, errorHandler, requestInterceptor);
-                  } else {
-                      throw new IllegalStateException("Observable method found but no RxJava on classpath.");
-                  }
-              }
-              return rxSupport.createRequestObservable(new RxSupport.Invoker() {
-                  @Override
-                  public ResponseWrapper invoke(RequestInterceptor requestInterceptor) {
-                      RestRequest request = new RestRequest(server, converter, client, requestInterceptor, methodInfo, args, logLevel, log);
-                      return (ResponseWrapper) request.invoke();
-                  }
-              });
-          }
-
-          // Apply the interceptor synchronously, recording the interception so we can replay it later.
-          // This way we still defer argument serialization to the background thread.
-          final RequestInterceptorTape interceptorTape = new RequestInterceptorTape();
-          requestInterceptor.intercept(interceptorTape);
-
-          Callback<?> callback = (Callback<?>) args[args.length - 1];
-          httpExecutor.execute(new CallbackRunnable(callback, callbackExecutor, errorHandler) {
-              @Override
-              public ResponseWrapper obtainResponse() {
-                  RestRequest request = new RestRequest(server, converter, client, interceptorTape, methodInfo, args, logLevel, log);
-                  return (ResponseWrapper) request.invoke();
-              }
-          });
-          return null; // Asynchronous methods should have return type of void.
+          throw new IllegalStateException("No handler strategy for method " + method);
       }
   }
-
-
-
-
-
 
 
   /**
